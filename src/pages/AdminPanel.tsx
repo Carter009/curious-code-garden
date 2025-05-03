@@ -1,23 +1,41 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@radix-ui/react-switch';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 
 const AdminPanel = () => {
   const { user } = useAuth();
   
-  // Mock API settings
+  // API settings with secure storage approach
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
   const [useApi, setUseApi] = useState(true);
   const [csvPath, setCsvPath] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Load saved API settings from localStorage on component mount
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem('bybit_api_key');
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+    
+    const savedUseApi = localStorage.getItem('bybit_use_api');
+    if (savedUseApi !== null) {
+      setUseApi(savedUseApi === 'true');
+    }
+    
+    const savedCsvPath = localStorage.getItem('bybit_csv_path');
+    if (savedCsvPath) {
+      setCsvPath(savedCsvPath);
+    }
+  }, []);
   
   // Mock users for admin
   const [users] = useState([
@@ -29,14 +47,32 @@ const AdminPanel = () => {
   const handleSettingsSave = () => {
     setIsSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Save API key to localStorage
+      localStorage.setItem('bybit_api_key', apiKey);
+      
+      // Only store API Secret temporarily in memory, never in localStorage
+      // In a real app, this would be sent to a secure backend 
+      // and never stored in the browser
+      
+      // Save other settings
+      localStorage.setItem('bybit_use_api', useApi.toString());
+      localStorage.setItem('bybit_csv_path', csvPath);
+      
       toast({
         title: "Settings Saved",
         description: "Your API settings have been updated successfully",
       });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive",
+      });
+      console.error("Error saving settings:", error);
+    } finally {
       setIsSaving(false);
-    }, 1000);
+    }
   };
 
   if (!user?.isAdmin) {
@@ -93,6 +129,10 @@ const AdminPanel = () => {
                     onChange={(e) => setApiSecret(e.target.value)}
                     placeholder="Enter your Bybit API secret"
                   />
+                  <p className="text-xs text-amber-600">
+                    Warning: For security, the API secret is only stored temporarily 
+                    in memory and will not persist between sessions.
+                  </p>
                 </div>
               </div>
             ) : (

@@ -1,12 +1,67 @@
+
 import { Order, OrdersResponse, FilterParams } from '@/types/models';
 
-// In a real app, this would be an environment variable
-const API_BASE_URL = '/api';
+// Status mapping for Bybit API responses
+const STATUS_MAP: Record<number, string> = {
+  5: "Waiting for chain",
+  10: "Waiting for buyer to pay",
+  20: "Waiting for seller to release",
+  30: "Appealing",
+  40: "Order canceled",
+  50: "Order finished",
+  60: "Paying (online)",
+  70: "Pay failed (online)",
+  80: "Exception canceled (hotswap)",
+  90: "Waiting for buyer to select tokenId",
+  100: "Objectioning",
+  110: "Waiting for user to raise objection"
+};
 
 export class ApiService {
+  // Helper method to get API credentials
+  private static getApiCredentials(): { useApi: boolean; apiKey: string | null } {
+    const useApi = localStorage.getItem('bybit_use_api') === 'true';
+    const apiKey = localStorage.getItem('bybit_api_key');
+    return { useApi, apiKey };
+  }
+
+  // Helper to convert Bybit timestamp to ISO date
+  private static convertTimestamp(timestamp: number): string {
+    const date = new Date(timestamp);
+    return date.toISOString();
+  }
+
+  // Helper to map Bybit order to our Order model
+  private static mapBybitOrderToOrder(bybitOrder: any): Order {
+    return {
+      id: bybitOrder.id,
+      order_id: bybitOrder.id,
+      side: bybitOrder.side === 0 ? 'BUY' : 'SELL',
+      status: STATUS_MAP[bybitOrder.status] || `Unknown (${bybitOrder.status})`,
+      token_id: bybitOrder.tokenId || '',
+      price: bybitOrder.price || '',
+      notify_token_quantity: bybitOrder.notifyTokenQuantity || '',
+      target_nickname: bybitOrder.targetNickName || '',
+      create_date: bybitOrder.createDate 
+        ? ApiService.convertTimestamp(parseInt(bybitOrder.createDate))
+        : new Date().toISOString(),
+      seller_real_name: bybitOrder.sellerRealName || '',
+      buyer_real_name: bybitOrder.buyerRealName || '',
+      amount: bybitOrder.amount || '',
+      reconciled: false,
+      reconciled_by: undefined,
+      reconciled_at: undefined,
+      notes: undefined,
+    };
+  }
+
   static async getOrders(filters: FilterParams): Promise<OrdersResponse> {
-    // In a real application, this would make an actual API call
-    // For this demo, we'll simulate the API response with mock data
+    const { useApi, apiKey } = ApiService.getApiCredentials();
+    
+    // In a real production app, this would make an actual API call to a secure backend
+    // that would then connect to the Bybit API using the stored credentials
+    // For now, we'll simulate with mock data but structure it like real API calls would be
+    
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const mockOrders: Order[] = Array(20).fill(null).map((_, index) => ({
@@ -27,6 +82,8 @@ export class ApiService {
       reconciled_at: Math.random() > 0.5 ? new Date().toISOString() : undefined,
       notes: Math.random() > 0.7 ? 'Some notes about this transaction' : undefined,
     }));
+    
+    console.log(`Using Bybit API: ${useApi ? 'Yes' : 'No'}, API Key available: ${apiKey ? 'Yes' : 'No'}`);
     
     // Filter orders based on the provided filters
     let filteredOrders = [...mockOrders];
@@ -72,7 +129,12 @@ export class ApiService {
   }
 
   static async getOrderDetails(orderId: string): Promise<Order> {
-    // In a real app, this would be an API call
+    const { useApi, apiKey } = ApiService.getApiCredentials();
+    
+    // In a real app, this would make an API call to a backend service
+    // that would then call the Bybit API
+    console.log(`Fetching order ${orderId} details. Using Bybit API: ${useApi ? 'Yes' : 'No'}`);
+    
     await new Promise(resolve => setTimeout(resolve, 300));
     
     // Return a mock order for demonstration
@@ -113,8 +175,21 @@ export class ApiService {
   }
 
   static async syncOrders(): Promise<{ message: string; new_orders: number }> {
-    // In a real app, this would be an API call
+    const { useApi, apiKey } = ApiService.getApiCredentials();
+    
+    // In a real app, this would make an API call to a backend service
+    // that would then connect to the Bybit API and sync orders
+    console.log(`Syncing orders. Using Bybit API: ${useApi ? 'Yes' : 'No'}, API Key available: ${apiKey ? 'Yes' : 'No'}`);
+    
+    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    if (!useApi || !apiKey) {
+      return {
+        message: 'API usage is disabled or API key is not configured',
+        new_orders: 0
+      };
+    }
     
     // Return a mock response
     return {
