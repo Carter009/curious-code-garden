@@ -11,6 +11,8 @@ import Dashboard from "@/pages/Dashboard";
 import Login from "@/pages/Login";
 import OrderDetail from "@/pages/OrderDetail";
 import AdminPanel from "@/pages/AdminPanel";
+import Profile from "@/pages/Profile";
+import CreateUser from "@/pages/CreateUser";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,12 +31,14 @@ const App = () => (
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/orders/:orderId" element={<OrderDetail />} />
+                <Route path="/profile" element={<Profile />} />
               </Route>
             </Route>
             
             <Route element={<ProtectedRoute requireAdmin />}>
               <Route element={<Layout />}>
                 <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/create-user" element={<CreateUser />} />
               </Route>
             </Route>
             

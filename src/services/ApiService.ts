@@ -1,4 +1,3 @@
-
 import { Order, OrdersResponse, FilterParams } from '@/types/models';
 
 // In a real app, this would be an environment variable
@@ -121,6 +120,20 @@ export class ApiService {
     return {
       message: 'Successfully synced orders from Bybit API',
       new_orders: Math.floor(Math.random() * 20) + 1
+    };
+  }
+
+  static async importOrders(orders: Order[]): Promise<{ message: string; imported_orders: number }> {
+    // In a real app, this would be an API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Simulate merging with existing orders
+    // In a production environment, this would send the orders to a backend API
+    console.log('Importing orders:', orders);
+    
+    return {
+      message: 'Successfully imported orders from CSV',
+      imported_orders: orders.length
     };
   }
 }

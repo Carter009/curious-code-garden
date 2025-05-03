@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { OrdersTable } from '@/components/OrdersTable';
 import { FilterBar } from '@/components/FilterBar';
+import { CsvImporter } from '@/components/CsvImporter';
 import { ApiService } from '@/services/ApiService';
 import { useAuth } from '@/context/AuthContext';
 import { Order, FilterParams } from '@/types/models';
@@ -104,6 +105,14 @@ const Dashboard = () => {
     setCurrentPage(page);
   };
 
+  const handleCsvImportSuccess = (count: number) => {
+    toast({
+      title: "CSV Import Complete",
+      description: `Successfully imported ${count} orders from CSV`,
+    });
+    fetchOrders(); // Refresh the orders list
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="space-y-8">
@@ -122,6 +131,10 @@ const Dashboard = () => {
           isSyncing={isSyncing}
           statusOptions={statusOptions}
         />
+
+        <div className="flex justify-end">
+          <CsvImporter onImportSuccess={handleCsvImportSuccess} />
+        </div>
 
         <div>
           <div className="text-sm text-gray-500 mb-2">
