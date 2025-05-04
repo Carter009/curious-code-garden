@@ -1,6 +1,7 @@
 
 import { Order, OrdersResponse, FilterParams } from '@/types/models';
 import { BybitP2PService, getBybitService, STATUS_MAP } from './bybitService';
+import { CredentialsService } from '@/services/CredentialsService';
 
 class ApiHandler {
   private bybitService: BybitP2PService | null = null;
@@ -17,7 +18,7 @@ class ApiHandler {
   
   // Check if API is configured
   isApiConfigured(): boolean {
-    return this.bybitService !== null;
+    return CredentialsService.isApiConfigured();
   }
   
   // Get orders with filtering and pagination

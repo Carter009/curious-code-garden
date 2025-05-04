@@ -1,25 +1,13 @@
 
 import { Order, OrdersResponse, FilterParams } from '@/types/models';
 import { apiHandler } from '@/server/api';
+import { CredentialsService } from '@/services/CredentialsService';
 
 export class ApiService {
-  // Helper method to get API credentials
-  private static getApiCredentials(): { useApi: boolean; apiKey: string | null } {
-    const useApi = localStorage.getItem('bybit_use_api') === 'true';
-    const apiKey = localStorage.getItem('bybit_api_key');
-    return { useApi, apiKey };
-  }
-
-  // Helper to convert Bybit timestamp to ISO date
-  private static convertTimestamp(timestamp: number): string {
-    const date = new Date(timestamp);
-    return date.toISOString();
-  }
-
   static async getOrders(filters: FilterParams): Promise<OrdersResponse> {
     // Get API credentials to check if we can use the API
-    const { useApi, apiKey } = ApiService.getApiCredentials();
-    console.log(`Using Bybit API: ${useApi ? 'Yes' : 'No'}, API Key available: ${apiKey ? 'Yes' : 'No'}`);
+    const credentials = CredentialsService.getCredentials();
+    console.log(`Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}, API Key available: ${credentials.apiKey ? 'Yes' : 'No'}`);
     
     try {
       // Use the API handler to get orders
@@ -32,8 +20,8 @@ export class ApiService {
 
   static async getOrderDetails(orderId: string): Promise<Order> {
     // Get API credentials to log status
-    const { useApi, apiKey } = ApiService.getApiCredentials();
-    console.log(`Fetching order ${orderId} details. Using Bybit API: ${useApi ? 'Yes' : 'No'}`);
+    const credentials = CredentialsService.getCredentials();
+    console.log(`Fetching order ${orderId} details. Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}`);
     
     try {
       // Use the API handler to get order details
@@ -56,8 +44,12 @@ export class ApiService {
 
   static async syncOrders(): Promise<{ message: string; new_orders: number }> {
     // Get API credentials to log status
-    const { useApi, apiKey } = ApiService.getApiCredentials();
-    console.log(`Syncing orders. Using Bybit API: ${useApi ? 'Yes' : 'No'}, API Key available: ${apiKey ? 'Yes' : 'No'}`);
+    const credentials = CredentialsService.getCredentials();
+    console.log(`Syncing orders. Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}, API Key available: ${credentials.apiKey ? 'Yes' : 'No'}`);
+    
+    if (!CredentialsService.isApiConfigured()) {
+      throw new Error('API usage is disabled or API key is not configured');
+    }
     
     try {
       // Use the API handler to sync orders

@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { useAuth } from '@/context/AuthContext';
+import { CredentialsService } from '@/services/CredentialsService';
 
 export const Layout: React.FC = () => {
   const { user } = useAuth();
@@ -12,39 +13,25 @@ export const Layout: React.FC = () => {
   // Check API connection status on component mount and when localStorage changes
   useEffect(() => {
     const checkApiStatus = () => {
-      const useApi = localStorage.getItem('bybit_use_api') === 'true';
-      const apiKey = localStorage.getItem('bybit_api_key');
-      const apiSecret = localStorage.getItem('bybit_api_secret_temp');
-      
-      if (useApi && apiKey && apiSecret) {
-        setApiStatus('API Key configured');
-      } else if (useApi && apiKey) {
-        setApiStatus('API Key saved (Secret needed)');
-      } else {
-        setApiStatus('Not connected');
-      }
+      setApiStatus(CredentialsService.getApiStatusText());
     };
     
     // Check status on mount
     checkApiStatus();
     
-    // Set up a listener for changes to localStorage
-    const handleStorageChange = () => {
+    // Set up a listener for credentials changes
+    const handleCredentialsChanged = () => {
       checkApiStatus();
     };
     
-    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('bybit_credentials_changed', handleCredentialsChanged);
     
-    // Custom event for when settings are saved in AdminPanel
-    const handleSettingsSaved = () => {
-      checkApiStatus();
-    };
-    
-    window.addEventListener('bybit_settings_changed', handleSettingsSaved);
+    // Also listen for localStorage changes from other tabs/windows
+    window.addEventListener('storage', handleCredentialsChanged);
     
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('bybit_settings_changed', handleSettingsSaved);
+      window.removeEventListener('bybit_credentials_changed', handleCredentialsChanged);
+      window.removeEventListener('storage', handleCredentialsChanged);
     };
   }, []);
   

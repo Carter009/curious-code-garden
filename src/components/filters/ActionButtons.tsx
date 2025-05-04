@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FilterX, Download, RefreshCw } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { CredentialsService } from '@/services/CredentialsService';
 
 interface ActionButtonsProps {
   onReset: () => void;
@@ -21,11 +22,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 }) => {
   const handleSync = () => {
     // Check API configuration before syncing
-    const useApi = localStorage.getItem('bybit_use_api') === 'true';
-    const apiKey = localStorage.getItem('bybit_api_key');
-    const apiSecret = localStorage.getItem('bybit_api_secret_temp');
-    
-    if (!useApi || !apiKey || !apiSecret) {
+    if (!CredentialsService.isApiConfigured()) {
       toast({
         title: "API Configuration Required",
         description: "Please configure your API settings in the Admin panel before syncing.",

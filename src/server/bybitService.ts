@@ -1,6 +1,7 @@
 
 import axios, { AxiosError } from 'axios';
 import CryptoJS from 'crypto-js';
+import { CredentialsService } from '@/services/CredentialsService';
 
 // Bybit API endpoints
 const BASE_URL = 'https://api.bybit.com';
@@ -170,15 +171,11 @@ export class BybitP2PService {
 }
 
 export const getBybitService = (): BybitP2PService | null => {
-  // In a real production environment, these would be securely stored
-  // For now, we're getting them from localStorage (not ideal for production)
-  const useApi = localStorage.getItem('bybit_use_api') === 'true';
-  const apiKey = localStorage.getItem('bybit_api_key');
-  const apiSecret = localStorage.getItem('bybit_api_secret_temp'); // This is temporary
+  const credentials = CredentialsService.getCredentials();
   
-  if (useApi && apiKey && apiSecret) {
+  if (credentials.useApi && credentials.apiKey && credentials.apiSecret) {
     try {
-      return new BybitP2PService(apiKey, apiSecret);
+      return new BybitP2PService(credentials.apiKey, credentials.apiSecret);
     } catch (error) {
       console.error('Failed to initialize Bybit service:', error);
       return null;

@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { apiHandler } from '@/server/api';
+import { CredentialsService, ApiCredentials } from '@/services/CredentialsService';
 
 const AdminPanel = () => {
   const { user } = useAuth();
@@ -19,43 +20,24 @@ const AdminPanel = () => {
   const [useApi, setUseApi] = useState(true);
   const [csvPath, setCsvPath] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [apiStatus, setApiStatus] = useState('Not connected');
+  const [apiStatus, setApiStatus] = useState<ApiCredentials['apiStatus']>('not_configured');
   
-  // Load saved API settings from localStorage on component mount
+  // Load saved API settings on component mount
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('bybit_api_key');
-    if (savedApiKey) {
-      setApiKey(savedApiKey);
+    const credentials = CredentialsService.getCredentials();
+    
+    if (credentials.apiKey) {
+      setApiKey(credentials.apiKey);
     }
     
-    const savedUseApi = localStorage.getItem('bybit_use_api');
-    if (savedUseApi !== null) {
-      setUseApi(savedUseApi === 'true');
-    }
+    setUseApi(credentials.useApi);
+    setApiStatus(credentials.apiStatus);
     
     const savedCsvPath = localStorage.getItem('bybit_csv_path');
     if (savedCsvPath) {
       setCsvPath(savedCsvPath);
     }
-    
-    // Check API connection status
-    updateApiStatus();
   }, []);
-  
-  // Update API status based on current settings
-  const updateApiStatus = () => {
-    const useApi = localStorage.getItem('bybit_use_api') === 'true';
-    const apiKey = localStorage.getItem('bybit_api_key');
-    const apiSecret = localStorage.getItem('bybit_api_secret_temp');
-    
-    if (useApi && apiKey && apiSecret) {
-      setApiStatus('API Key configured');
-    } else if (useApi && apiKey) {
-      setApiStatus('API Key saved (Secret needed)');
-    } else {
-      setApiStatus('Not connected');
-    }
-  };
   
   // Mock users for admin
   const [users] = useState([
@@ -68,24 +50,21 @@ const AdminPanel = () => {
     setIsSaving(true);
     
     try {
-      // Save API key to localStorage
-      localStorage.setItem('bybit_api_key', apiKey);
+      // Save settings using the credentials service
+      const updatedCredentials = CredentialsService.setCredentials({
+        useApi,
+        apiKey,
+        apiSecret: apiSecret || undefined
+      });
       
-      // Only store API Secret temporarily in memory, never permanently in localStorage
-      // This is not ideal for production, but works for demonstration
-      if (apiSecret) {
-        localStorage.setItem('bybit_api_secret_temp', apiSecret);
-      }
+      // Update local state with the new credentials
+      setApiStatus(updatedCredentials.apiStatus);
       
       // Save other settings
-      localStorage.setItem('bybit_use_api', useApi.toString());
       localStorage.setItem('bybit_csv_path', csvPath);
       
-      // Update API status
-      updateApiStatus();
-      
       // Try to sync with Bybit API to verify settings
-      if (useApi && apiKey && apiSecret) {
+      if (updatedCredentials.apiStatus === 'configured') {
         toast({
           title: "Testing API Connection",
           description: "Verifying connection to Bybit API...",
@@ -142,9 +121,11 @@ const AdminPanel = () => {
       });
       
       // Save credentials temporarily for testing
-      localStorage.setItem('bybit_api_key', apiKey);
-      localStorage.setItem('bybit_api_secret_temp', apiSecret);
-      localStorage.setItem('bybit_use_api', 'true');
+      CredentialsService.setCredentials({
+        useApi: true,
+        apiKey,
+        apiSecret
+      });
       
       // Refresh API handler with new credentials
       apiHandler.refreshBybitService();
@@ -157,7 +138,9 @@ const AdminPanel = () => {
         description: `Successfully connected to Bybit API. ${result.message}`,
       });
       
-      updateApiStatus();
+      // Update API status
+      const credentials = CredentialsService.getCredentials();
+      setApiStatus(credentials.apiStatus);
     } catch (error: any) {
       console.error("API test failed:", error);
       
@@ -168,6 +151,20 @@ const AdminPanel = () => {
       });
     }
   };
+
+  const getApiStatusDisplay = () => {
+    switch (apiStatus) {
+      case 'configured':
+        return { text: 'API Key configured', className: 'bg-green-100 text-green-800' };
+      case 'partial':
+        return { text: 'API Key saved (Secret needed)', className: 'bg-amber-100 text-amber-800' };
+      case 'not_configured':
+      default:
+        return { text: 'Not connected', className: 'bg-gray-200' };
+    }
+  };
+  
+  const statusDisplay = getApiStatusDisplay();
 
   if (!user?.isAdmin) {
     return (
@@ -200,8 +197,8 @@ const AdminPanel = () => {
                   checked={useApi}
                   onCheckedChange={setUseApi}
                 />
-                <span className={`px-1.5 py-0.5 rounded text-xs ${apiStatus === 'Not connected' ? 'bg-gray-200' : apiStatus.includes('Secret needed') ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
-                  {apiStatus}
+                <span className={`px-1.5 py-0.5 rounded text-xs ${statusDisplay.className}`}>
+                  {statusDisplay.text}
                 </span>
               </div>
             </div>
