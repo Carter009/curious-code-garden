@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/pagination';
 
 const Dashboard = () => {
-  const { user } = useSupabaseAuth();
+  const { user, isAdmin } = useSupabaseAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filters, setFilters] = useState<FilterParams>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +128,7 @@ const Dashboard = () => {
           onFilter={handleFilter}
           onExport={handleExport}
           onSync={handleSync}
-          isAdmin={user?.is_admin || false}
+          isAdmin={isAdmin}
           isSyncing={isSyncing}
           statusOptions={statusOptions}
         />

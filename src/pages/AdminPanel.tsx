@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { apiHandler } from '@/server/api';
 import { CredentialsService, ApiCredentials } from '@/services/CredentialsService';
 
 const AdminPanel = () => {
-  const { user } = useSupabaseAuth();
+  const { user, isAdmin } = useSupabaseAuth();
   
   // API settings with secure storage approach
   const [apiKey, setApiKey] = useState('');
@@ -165,7 +166,8 @@ const AdminPanel = () => {
   
   const statusDisplay = getApiStatusDisplay();
 
-  if (!user?.is_admin) {
+  // Use the isAdmin value from context rather than trying to access it on user object
+  if (!isAdmin) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">
         <h2 className="text-2xl font-bold">Access Denied</h2>
