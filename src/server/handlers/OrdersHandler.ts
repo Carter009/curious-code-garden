@@ -1,3 +1,4 @@
+
 /**
  * OrdersHandler - Handles order-related operations
  */
@@ -15,7 +16,7 @@ export class OrdersHandler {
         return this.getMockOrders(filters);
       }
 
-      console.log('Fetching orders from Bybit API');
+      console.log('Fetching orders from Bybit API with filters:', filters);
       const page = filters.page || 1;
       const perPage = filters.per_page || 10;
       
@@ -211,13 +212,23 @@ export class OrdersHandler {
     }
     
     if (filters.start_date) {
-      const startDate = new Date(filters.start_date).getTime();
-      filteredOrders = filteredOrders.filter(order => new Date(order.create_date).getTime() >= startDate);
+      // Add time component to match the full day
+      const startDate = new Date(filters.start_date + 'T00:00:00');
+      console.log('Filtering by start date:', startDate, filters.start_date);
+      filteredOrders = filteredOrders.filter(order => {
+        const orderDate = new Date(order.create_date);
+        return orderDate >= startDate;
+      });
     }
     
     if (filters.end_date) {
-      const endDate = new Date(filters.end_date).getTime();
-      filteredOrders = filteredOrders.filter(order => new Date(order.create_date).getTime() <= endDate);
+      // Add time component to include the full day
+      const endDate = new Date(filters.end_date + 'T23:59:59');
+      console.log('Filtering by end date:', endDate, filters.end_date);
+      filteredOrders = filteredOrders.filter(order => {
+        const orderDate = new Date(order.create_date);
+        return orderDate <= endDate;
+      });
     }
     
     return filteredOrders;
@@ -225,24 +236,37 @@ export class OrdersHandler {
   
   // Generate mock orders for when API is not available
   private getMockOrders(filters: FilterParams): OrdersResponse {
-    const mockOrders: Order[] = Array(20).fill(null).map((_, index) => ({
-      id: `${index + 1}`,
-      order_id: `ORD-${100000 + index}`,
-      side: index % 2 === 0 ? 'BUY' : 'SELL',
-      status: ['Finished', 'Completed', 'Waiting for payment', 'Canceled'][Math.floor(Math.random() * 4)],
-      token_id: `TKN-${200000 + index}`,
-      price: `$${(Math.random() * 1000).toFixed(2)}`,
-      notify_token_quantity: (Math.random() * 10).toFixed(2).toString(),
-      target_nickname: `user${index}`,
-      create_date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-      seller_real_name: `Seller ${index}`,
-      buyer_real_name: `Buyer ${index}`,
-      amount: `$${(Math.random() * 5000).toFixed(2)}`,
-      reconciled: Math.random() > 0.5,
-      reconciled_by: Math.random() > 0.5 ? '1' : undefined,
-      reconciled_at: Math.random() > 0.5 ? new Date().toISOString() : undefined,
-      notes: Math.random() > 0.7 ? 'Some notes about this transaction' : undefined,
-    }));
+    // Generate current date for today's mock orders
+    const today = new Date();
+    const currentDateString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    // Create some mock orders with today's date
+    const mockOrders: Order[] = Array(20).fill(null).map((_, index) => {
+      // For the first 5 orders, use today's date if no date filter is applied
+      const isToday = index < 5;
+      const daysAgo = isToday ? 0 : Math.floor(Math.random() * 30);
+      const orderDate = new Date(today);
+      orderDate.setDate(orderDate.getDate() - daysAgo);
+      
+      return {
+        id: `${index + 1}`,
+        order_id: `ORD-${100000 + index}`,
+        side: index % 2 === 0 ? 'BUY' : 'SELL',
+        status: ['Finished', 'Completed', 'Waiting for payment', 'Canceled'][Math.floor(Math.random() * 4)],
+        token_id: `TKN-${200000 + index}`,
+        price: `$${(Math.random() * 1000).toFixed(2)}`,
+        notify_token_quantity: (Math.random() * 10).toFixed(2).toString(),
+        target_nickname: `user${index}`,
+        create_date: orderDate.toISOString(),
+        seller_real_name: `Seller ${index}`,
+        buyer_real_name: `Buyer ${index}`,
+        amount: `$${(Math.random() * 5000).toFixed(2)}`,
+        reconciled: Math.random() > 0.5,
+        reconciled_by: Math.random() > 0.5 ? '1' : undefined,
+        reconciled_at: Math.random() > 0.5 ? new Date().toISOString() : undefined,
+        notes: Math.random() > 0.7 ? 'Some notes about this transaction' : undefined,
+      };
+    });
     
     // Check if any of these orders have locally saved data
     const locallyEnhancedOrders = mockOrders.map(order => {
@@ -268,6 +292,8 @@ export class OrdersHandler {
     const pages = Math.ceil(total / perPage);
     
     const paginatedOrders = filteredOrders.slice((page - 1) * perPage, page * perPage);
+    
+    console.log(`Returning ${paginatedOrders.length} mock orders for page ${page}`);
     
     return {
       orders: paginatedOrders,

@@ -7,6 +7,7 @@ import { ApiService } from '@/services/ApiService';
 import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Order, FilterParams } from '@/types/models';
 import { toast } from '@/hooks/use-toast';
+import { format, startOfToday } from 'date-fns';
 import {
   Pagination,
   PaginationContent,
@@ -15,6 +16,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const { user, isAdmin } = useSupabaseAuth();
@@ -46,6 +48,14 @@ const Dashboard = () => {
       });
       setStatusOptions(Array.from(uniqueStatuses));
       
+      // Display a message if no orders are found
+      if (response.orders.length === 0) {
+        toast({
+          title: "No orders found",
+          description: "Try adjusting your filters or sync with Bybit API",
+          variant: "default",
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -114,14 +124,48 @@ const Dashboard = () => {
     fetchOrders(); // Refresh the orders list
   };
 
+  // Filter orders for today
+  const filterToday = () => {
+    const today = startOfToday();
+    const formattedToday = format(today, 'yyyy-MM-dd');
+    
+    setFilters(prev => ({
+      ...prev,
+      start_date: formattedToday,
+      end_date: formattedToday
+    }));
+    
+    toast({
+      title: "Today's Orders",
+      description: `Showing orders for ${format(today, 'MMMM d, yyyy')}`,
+    });
+  };
+
+  // Clear all filters
+  const resetFilters = () => {
+    setFilters({});
+    setCurrentPage(1);
+    
+    toast({
+      title: "Filters Reset",
+      description: "Showing all orders",
+    });
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Order Dashboard</h1>
-          <p className="text-gray-500 mt-2">
-            Manage and reconcile Bybit P2P orders
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Order Dashboard</h1>
+            <p className="text-gray-500 mt-2">
+              Manage and reconcile Bybit P2P orders
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={filterToday}>Today's Orders</Button>
+            <Button variant="outline" onClick={resetFilters}>Reset Filters</Button>
+          </div>
         </div>
 
         <FilterBar
@@ -140,6 +184,9 @@ const Dashboard = () => {
         <div>
           <div className="text-sm text-gray-500 mb-2">
             Showing {orders.length} of {totalOrders} orders
+            {filters.start_date && filters.start_date === filters.end_date && (
+              <span> for {filters.start_date}</span>
+            )}
           </div>
           <OrdersTable orders={orders} isLoading={isLoading} />
         </div>
