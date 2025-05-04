@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { OrdersTable } from '@/components/OrdersTable';
 import { FilterBar } from '@/components/FilterBar';
@@ -90,10 +91,10 @@ const Dashboard = () => {
         description: result.message,
       });
       fetchOrders(); // Reload orders after sync
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Sync Failed",
-        description: "Failed to sync orders from Bybit",
+        description: error.message || "Failed to sync orders from Bybit",
         variant: "destructive",
       });
     } finally {

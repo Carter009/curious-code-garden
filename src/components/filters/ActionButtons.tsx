@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FilterX, Download, RefreshCw } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface ActionButtonsProps {
   onReset: () => void;
@@ -18,6 +19,27 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   isAdmin, 
   isSyncing 
 }) => {
+  const handleSync = () => {
+    // Check API configuration before syncing
+    const useApi = localStorage.getItem('bybit_use_api') === 'true';
+    const apiKey = localStorage.getItem('bybit_api_key');
+    const apiSecret = localStorage.getItem('bybit_api_secret_temp');
+    
+    if (!useApi || !apiKey || !apiSecret) {
+      toast({
+        title: "API Configuration Required",
+        description: "Please configure your API settings in the Admin panel before syncing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // If API is configured, proceed with sync
+    if (onSync) {
+      onSync();
+    }
+  };
+  
   return (
     <div className="flex justify-between pt-2">
       <div className="space-x-2">
@@ -31,9 +53,9 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         </Button>
       </div>
       
-      {isAdmin && onSync && (
+      {isAdmin && (
         <Button 
-          onClick={onSync}
+          onClick={handleSync}
           disabled={isSyncing}
         >
           <RefreshCw className={`mr-1 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
