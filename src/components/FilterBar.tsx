@@ -1,25 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { FilterParams } from '@/types/models';
-import { Calendar as CalendarIcon, Search, FilterX, Download, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { SearchFilter } from './filters/SearchFilter';
+import { DateFilter } from './filters/DateFilter';
+import { SelectFilter } from './filters/SelectFilter';
+import { CheckboxFilter } from './filters/CheckboxFilter';
+import { ActionButtons } from './filters/ActionButtons';
 
 interface FilterBarProps {
   onFilter: (filters: FilterParams) => void;
@@ -78,170 +65,86 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     onFilter({});
   };
 
+  // Prepare status options for the select filter
+  const statusFilterOptions = [
+    { value: 'all', label: 'All statuses' },
+    ...statusOptions.map(status => ({ value: status, label: status }))
+  ];
+
+  // Prepare side options for the select filter
+  const sideFilterOptions = [
+    { value: 'all', label: 'All sides' },
+    { value: 'BUY', label: 'Buy' },
+    { value: 'SELL', label: 'Sell' }
+  ];
+
+  // Prepare reconciled options for the checkbox filter
+  const reconciledOptions = [
+    { id: 'reconciled-yes', label: 'Yes', value: 'true' },
+    { id: 'reconciled-no', label: 'No', value: 'false' }
+  ];
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
       <div className="flex flex-wrap gap-4">
-        {/* Search */}
-        <div className="flex-1 min-w-[200px]">
-          <Label htmlFor="search" className="mb-1">Search</Label>
-          <div className="relative">
-            <Search className="absolute left-2 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              id="search"
-              placeholder="Order ID, name, nickname..."
-              className="pl-8"
-              value={filters.search || ''}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-            />
-          </div>
-        </div>
+        {/* Search Filter */}
+        <SearchFilter 
+          value={filters.search || ''} 
+          onChange={(value) => handleFilterChange('search', value)} 
+        />
 
         {/* Date Filters */}
-        <div className="w-[200px]">
-          <Label htmlFor="start-date" className="mb-1">Start Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-                id="start-date"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, 'PPP') : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={handleStartDateSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateFilter 
+          label="Start Date"
+          id="start-date"
+          date={startDate}
+          onSelect={handleStartDateSelect}
+        />
 
-        <div className="w-[200px]">
-          <Label htmlFor="end-date" className="mb-1">End Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-                id="end-date"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, 'PPP') : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={handleEndDateSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+        <DateFilter 
+          label="End Date"
+          id="end-date"
+          date={endDate}
+          onSelect={handleEndDateSelect}
+        />
 
         {/* Side Filter */}
-        <div className="w-[150px]">
-          <Label htmlFor="side" className="mb-1">Side</Label>
-          <Select 
-            value={filters.side || 'all'}
-            onValueChange={(value) => handleFilterChange('side', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger id="side" className="w-full">
-              <SelectValue placeholder="All sides" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All sides</SelectItem>
-              <SelectItem value="BUY">Buy</SelectItem>
-              <SelectItem value="SELL">Sell</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <SelectFilter 
+          id="side"
+          label="Side"
+          value={filters.side || 'all'}
+          onChange={(value) => handleFilterChange('side', value)}
+          placeholder="All sides"
+          options={sideFilterOptions}
+        />
 
         {/* Status Filter */}
-        <div className="w-[150px]">
-          <Label htmlFor="status" className="mb-1">Status</Label>
-          <Select 
-            value={filters.status || 'all'}
-            onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
-          >
-            <SelectTrigger id="status" className="w-full">
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              {statusOptions.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <SelectFilter 
+          id="status"
+          label="Status"
+          value={filters.status || 'all'}
+          onChange={(value) => handleFilterChange('status', value)}
+          placeholder="All statuses"
+          options={statusFilterOptions}
+        />
 
         {/* Reconciled Filter */}
-        <div className="w-[150px]">
-          <Label className="mb-1">Reconciled</Label>
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox 
-              id="reconciled-yes"
-              checked={filters.reconciled === 'true'}
-              onCheckedChange={(checked) => {
-                handleFilterChange('reconciled', checked ? 'true' : undefined);
-              }}
-            />
-            <label
-              htmlFor="reconciled-yes"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Yes
-            </label>
-
-            <Checkbox 
-              id="reconciled-no"
-              checked={filters.reconciled === 'false'}
-              onCheckedChange={(checked) => {
-                handleFilterChange('reconciled', checked ? 'false' : undefined);
-              }}
-            />
-            <label
-              htmlFor="reconciled-no"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              No
-            </label>
-          </div>
-        </div>
+        <CheckboxFilter 
+          label="Reconciled"
+          options={reconciledOptions}
+          value={filters.reconciled}
+          onChange={(value) => handleFilterChange('reconciled', value)}
+        />
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between pt-2">
-        <div className="space-x-2">
-          <Button variant="outline" onClick={resetFilters}>
-            <FilterX className="mr-1 h-4 w-4" />
-            Reset Filters
-          </Button>
-          <Button variant="outline" onClick={onExport}>
-            <Download className="mr-1 h-4 w-4" />
-            Export CSV
-          </Button>
-        </div>
-        
-        {isAdmin && (
-          <Button 
-            onClick={onSync}
-            disabled={isSyncing}
-          >
-            <RefreshCw className={`mr-1 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-            {isSyncing ? 'Syncing...' : 'Sync Orders'}
-          </Button>
-        )}
-      </div>
+      <ActionButtons 
+        onReset={resetFilters}
+        onExport={onExport}
+        onSync={onSync}
+        isAdmin={isAdmin}
+        isSyncing={isSyncing}
+      />
     </div>
   );
 };
