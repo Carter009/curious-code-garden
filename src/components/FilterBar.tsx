@@ -52,7 +52,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   const handleFilterChange = (key: keyof FilterParams, value: any) => {
     setFilters((prev) => {
-      if (value === undefined || value === '') {
+      if (value === undefined || value === 'all' || value === '') {
         const newFilters = { ...prev };
         delete newFilters[key];
         return newFilters;
@@ -149,14 +149,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         <div className="w-[150px]">
           <Label htmlFor="side" className="mb-1">Side</Label>
           <Select 
-            value={filters.side}
-            onValueChange={(value) => handleFilterChange('side', value || undefined)}
+            value={filters.side || 'all'}
+            onValueChange={(value) => handleFilterChange('side', value === 'all' ? undefined : value)}
           >
             <SelectTrigger id="side" className="w-full">
               <SelectValue placeholder="All sides" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All sides</SelectItem>
+              <SelectItem value="all">All sides</SelectItem>
               <SelectItem value="BUY">Buy</SelectItem>
               <SelectItem value="SELL">Sell</SelectItem>
             </SelectContent>
@@ -167,14 +167,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         <div className="w-[150px]">
           <Label htmlFor="status" className="mb-1">Status</Label>
           <Select 
-            value={filters.status}
-            onValueChange={(value) => handleFilterChange('status', value || undefined)}
+            value={filters.status || 'all'}
+            onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}
           >
             <SelectTrigger id="status" className="w-full">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
               {statusOptions.map((status) => (
                 <SelectItem key={status} value={status}>
                   {status}
