@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { OrdersTable } from '@/components/OrdersTable';
 import { FilterBar } from '@/components/FilterBar';
@@ -26,7 +25,7 @@ const Dashboard = () => {
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Use React Query to fetch orders
+  // Use React Query to fetch orders - updated to use the latest React Query v5 syntax
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['orders', filters, currentPage],
     queryFn: () => ApiService.getOrders({
@@ -34,7 +33,8 @@ const Dashboard = () => {
       page: currentPage,
       per_page: 10
     }),
-    keepPreviousData: true,
+    // Use placeholderData instead of keepPreviousData in v5
+    placeholderData: (previousData) => previousData,
     onSuccess: (data) => {
       // Extract unique statuses for filter dropdown
       const uniqueStatuses = new Set<string>();

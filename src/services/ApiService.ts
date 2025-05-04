@@ -39,11 +39,13 @@ export class ApiService {
       });
       
       console.log("Using credentials from Supabase");
+      // Fix the type issue by explicitly casting to the correct type
+      const apiStatus = data.api_key && data.api_secret ? 'configured' : 'partial';
       return {
         useApi: data.use_api,
         apiKey: data.api_key,
         apiSecret: data.api_secret,
-        apiStatus: data.api_key && data.api_secret ? 'configured' : 'partial'
+        apiStatus: apiStatus as "configured" | "partial" | "not_configured"
       };
     } catch (error) {
       console.error('Error accessing Supabase credentials:', error);
