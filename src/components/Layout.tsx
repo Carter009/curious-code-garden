@@ -3,11 +3,11 @@ import React, { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
-import { useAuth } from '@/context/AuthContext';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { CredentialsService } from '@/services/CredentialsService';
 
 export const Layout: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [apiStatus, setApiStatus] = useState<string>('Not connected');
   
   // Check API connection status on component mount and when localStorage changes

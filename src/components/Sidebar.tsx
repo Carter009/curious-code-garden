@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, signOut, isAdmin } = useSupabaseAuth();
   const location = useLocation();
   
   const isActive = (path: string) => {
@@ -31,10 +31,10 @@ export const Sidebar: React.FC = () => {
       <ul className="mt-6 space-y-2 px-2">
         <li>
           <Link 
-            to="/" 
+            to="/dashboard" 
             className={cn(
               "flex items-center px-4 py-2 rounded-md text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors",
-              isActive('/') && "bg-zinc-800 text-white"
+              isActive('/dashboard') && "bg-zinc-800 text-white"
             )}
           >
             <LayoutDashboard className="h-5 w-5 mr-3" />
@@ -42,7 +42,7 @@ export const Sidebar: React.FC = () => {
           </Link>
         </li>
         
-        {user?.isAdmin && (
+        {isAdmin && (
           <>
             <li>
               <Link 
@@ -86,7 +86,7 @@ export const Sidebar: React.FC = () => {
         
         <li>
           <button 
-            onClick={logout}
+            onClick={signOut}
             className="flex w-full items-center px-4 py-2 rounded-md text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
           >
             <LogOut className="h-5 w-5 mr-3" />

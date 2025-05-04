@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
@@ -7,6 +7,13 @@ import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 const Index = () => {
   const { user, loading } = useSupabaseAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // If logged in, redirect to dashboard
+    if (user && !loading) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -16,9 +23,8 @@ const Index = () => {
     );
   }
 
-  // If logged in, redirect to dashboard
+  // Don't render anything if we're about to redirect
   if (user) {
-    navigate('/dashboard');
     return null;
   }
 

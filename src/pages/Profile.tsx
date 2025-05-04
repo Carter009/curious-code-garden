@@ -1,25 +1,40 @@
 
-import React from 'react';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/hooks/use-toast';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useSupabaseAuth();
   
-  const [email, setEmail] = React.useState(user?.email || '');
-  const [name, setName] = React.useState(user?.name || '');
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email || '');
+      setName(user.user_metadata?.name || '');
+    }
+  }, [user]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would save changes to the user profile
     setIsEditing(false);
     // Show success message
-    alert('Profile updated successfully');
+    toast({
+      title: "Profile updated successfully",
+      description: "Your profile information has been updated."
+    });
   };
+  
+  if (!user) {
+    return null;
+  }
   
   return (
     <div className="container mx-auto max-w-3xl">
@@ -59,7 +74,7 @@ const Profile = () => {
               <Label htmlFor="role">Role</Label>
               <Input
                 id="role"
-                value={user?.isAdmin ? 'Administrator' : 'Regular User'}
+                value={isAdmin ? 'Administrator' : 'Regular User'}
                 disabled
               />
             </div>
