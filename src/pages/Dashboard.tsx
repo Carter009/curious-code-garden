@@ -8,6 +8,7 @@ import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Order, FilterParams } from '@/types/models';
 import { toast } from '@/hooks/use-toast';
 import { format, startOfToday } from 'date-fns';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Pagination,
   PaginationContent,
@@ -20,57 +21,51 @@ import { Button } from '@/components/ui/button';
 
 const Dashboard = () => {
   const { user, isAdmin } = useSupabaseAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
   const [filters, setFilters] = useState<FilterParams>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [totalOrders, setTotalOrders] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [currentPage, setCurrentPage] = useState(1);
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
-
-  const fetchOrders = async () => {
-    setIsLoading(true);
-    try {
-      const response = await ApiService.getOrders({
-        ...filters,
-        page: currentPage,
-        per_page: 10
-      });
-      setOrders(response.orders);
-      setTotalOrders(response.total);
-      setTotalPages(response.pages);
-      
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Use React Query to fetch orders
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['orders', filters, currentPage],
+    queryFn: () => ApiService.getOrders({
+      ...filters,
+      page: currentPage,
+      per_page: 10
+    }),
+    keepPreviousData: true,
+    onSuccess: (data) => {
       // Extract unique statuses for filter dropdown
       const uniqueStatuses = new Set<string>();
-      response.orders.forEach(order => {
+      data.orders.forEach(order => {
         if (order.status) uniqueStatuses.add(order.status);
       });
       setStatusOptions(Array.from(uniqueStatuses));
       
       // Display a message if no orders are found
-      if (response.orders.length === 0) {
+      if (data.orders.length === 0) {
         toast({
           title: "No orders found",
           description: "Try adjusting your filters or sync with Bybit API",
           variant: "default",
         });
       }
-    } catch (error) {
+    },
+    onError: (error: any) => {
       toast({
         title: "Error",
         description: "Failed to fetch orders",
         variant: "destructive",
       });
       console.error("Error fetching orders:", error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  });
 
-  useEffect(() => {
-    fetchOrders();
-  }, [filters, currentPage]);
+  // Get current values from the query result
+  const orders = data?.orders || [];
+  const totalOrders = data?.total || 0;
+  const totalPages = data?.pages || 1;
 
   const handleFilter = (newFilters: FilterParams) => {
     setFilters(newFilters);
@@ -92,24 +87,37 @@ const Dashboard = () => {
     }, 2000);
   };
 
-  const handleSync = async () => {
-    setIsSyncing(true);
-    try {
-      const result = await ApiService.syncOrders();
+  // Use mutation for sync operation
+  const syncMutation = useMutation({
+    mutationFn: ApiService.syncOrders,
+    onMutate: () => {
+      setIsSyncing(true);
+      toast({
+        title: "Syncing",
+        description: "Fetching latest orders from Bybit API...",
+      });
+    },
+    onSuccess: (result) => {
       toast({
         title: "Sync Successful",
         description: result.message,
       });
-      fetchOrders(); // Reload orders after sync
-    } catch (error: any) {
+      refetch(); // Reload orders after sync
+    },
+    onError: (error: any) => {
       toast({
         title: "Sync Failed",
         description: error.message || "Failed to sync orders from Bybit",
         variant: "destructive",
       });
-    } finally {
+    },
+    onSettled: () => {
       setIsSyncing(false);
     }
+  });
+
+  const handleSync = () => {
+    syncMutation.mutate();
   };
 
   const handlePageChange = (page: number) => {
@@ -121,7 +129,7 @@ const Dashboard = () => {
       title: "CSV Import Complete",
       description: `Successfully imported ${count} orders from CSV`,
     });
-    fetchOrders(); // Refresh the orders list
+    refetch(); // Refresh the orders list
   };
 
   // Filter orders for today

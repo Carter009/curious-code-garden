@@ -1,12 +1,59 @@
 
 import { Order, OrdersResponse, FilterParams } from '@/types/models';
 import { backendServer } from '@/server/index';
+import { supabase } from '@/integrations/supabase/client';
 import { CredentialsService } from '@/services/CredentialsService';
 
 export class ApiService {
+  static async getCredentialsFromSupabase() {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("No user authenticated, using local credentials");
+        return CredentialsService.getCredentials();
+      }
+      
+      // Try to fetch credentials from Supabase
+      const { data, error } = await supabase
+        .from('api_credentials')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.log("Error fetching credentials from Supabase:", error);
+        return CredentialsService.getCredentials();
+      }
+      
+      if (!data) {
+        console.log("No credentials found in Supabase, using local credentials");
+        return CredentialsService.getCredentials();
+      }
+      
+      // Update local credentials for session persistence
+      CredentialsService.setCredentials({
+        useApi: data.use_api,
+        apiKey: data.api_key,
+        apiSecret: data.api_secret
+      });
+      
+      console.log("Using credentials from Supabase");
+      return {
+        useApi: data.use_api,
+        apiKey: data.api_key,
+        apiSecret: data.api_secret,
+        apiStatus: data.api_key && data.api_secret ? 'configured' : 'partial'
+      };
+    } catch (error) {
+      console.error('Error accessing Supabase credentials:', error);
+      return CredentialsService.getCredentials();
+    }
+  }
+
   static async getOrders(filters: FilterParams): Promise<OrdersResponse> {
-    // Get API credentials to check if we can use the API
-    const credentials = CredentialsService.getCredentials();
+    // Get API credentials from Supabase
+    const credentials = await this.getCredentialsFromSupabase();
     console.log(`Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}, API Key available: ${credentials.apiKey ? 'Yes' : 'No'}`);
     
     // Initialize the backend server with current credentials
@@ -22,8 +69,8 @@ export class ApiService {
   }
 
   static async getOrderDetails(orderId: string): Promise<Order> {
-    // Get API credentials to log status
-    const credentials = CredentialsService.getCredentials();
+    // Get API credentials from Supabase
+    const credentials = await this.getCredentialsFromSupabase();
     console.log(`Fetching order ${orderId} details. Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}`);
     
     // Initialize the backend server with current credentials
@@ -49,11 +96,11 @@ export class ApiService {
   }
 
   static async syncOrders(): Promise<{ message: string; new_orders: number }> {
-    // Get API credentials to log status
-    const credentials = CredentialsService.getCredentials();
+    // Get API credentials from Supabase
+    const credentials = await this.getCredentialsFromSupabase();
     console.log(`Syncing orders. Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}, API Key available: ${credentials.apiKey ? 'Yes' : 'No'}`);
     
-    if (!CredentialsService.isApiConfigured()) {
+    if (!credentials.useApi || !credentials.apiKey || !credentials.apiSecret) {
       throw new Error('API usage is disabled or API key is not configured');
     }
     
