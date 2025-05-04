@@ -1,5 +1,5 @@
 
-import { AuthProvider } from "./context/AuthContext";
+import { SupabaseAuthProvider } from "./context/SupabaseAuthContext";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
+import Auth from "@/pages/Auth";
 import Login from "@/pages/Login";
 import OrderDetail from "@/pages/OrderDetail";
 import AdminPanel from "@/pages/AdminPanel";
@@ -19,13 +20,14 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
+    <SupabaseAuthProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Navigate to="/auth" replace />} />
             
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
@@ -46,7 +48,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </AuthProvider>
+    </SupabaseAuthProvider>
   </QueryClientProvider>
 );
 

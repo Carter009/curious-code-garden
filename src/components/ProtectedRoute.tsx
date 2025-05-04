@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ProtectedRouteProps {
@@ -9,7 +9,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requireAdmin = false }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useSupabaseAuth();
 
   if (loading) {
     return (
@@ -27,10 +27,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requireAdmin = f
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/auth" />;
   }
 
-  if (requireAdmin && !user.isAdmin) {
+  if (requireAdmin && !isAdmin) {
     return <Navigate to="/" />;
   }
 

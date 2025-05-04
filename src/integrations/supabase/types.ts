@@ -9,7 +9,139 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      api_credentials: {
+        Row: {
+          api_key: string | null
+          api_secret: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          use_api: boolean | null
+          user_id: string
+        }
+        Insert: {
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          use_api?: boolean | null
+          user_id: string
+        }
+        Update: {
+          api_key?: string | null
+          api_secret?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          use_api?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          amount: string | null
+          buyer_real_name: string | null
+          create_date: string | null
+          created_at: string | null
+          id: string
+          notes: string | null
+          notify_token_quantity: string | null
+          order_id: string
+          price: string | null
+          reconciled: boolean | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          seller_real_name: string | null
+          side: Database["public"]["Enums"]["order_side"]
+          status: string
+          target_nickname: string | null
+          token_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: string | null
+          buyer_real_name?: string | null
+          create_date?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          notify_token_quantity?: string | null
+          order_id: string
+          price?: string | null
+          reconciled?: boolean | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          seller_real_name?: string | null
+          side: Database["public"]["Enums"]["order_side"]
+          status: string
+          target_nickname?: string | null
+          token_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: string | null
+          buyer_real_name?: string | null
+          create_date?: string | null
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          notify_token_quantity?: string | null
+          order_id?: string
+          price?: string | null
+          reconciled?: boolean | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          seller_real_name?: string | null
+          side?: Database["public"]["Enums"]["order_side"]
+          status?: string
+          target_nickname?: string | null
+          token_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_reconciled_by_fkey"
+            columns: ["reconciled_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_admin: boolean | null
+          name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          is_admin?: boolean | null
+          name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_admin?: boolean | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +150,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      order_side: "BUY" | "SELL"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +265,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      order_side: ["BUY", "SELL"],
+    },
   },
 } as const
