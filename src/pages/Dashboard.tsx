@@ -4,7 +4,7 @@ import { OrdersTable } from '@/components/OrdersTable';
 import { FilterBar } from '@/components/FilterBar';
 import { CsvImporter } from '@/components/CsvImporter';
 import { ApiService } from '@/services/ApiService';
-import { useAuth } from '@/context/AuthContext';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Order, FilterParams } from '@/types/models';
 import { toast } from '@/hooks/use-toast';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/pagination';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filters, setFilters] = useState<FilterParams>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +128,7 @@ const Dashboard = () => {
           onFilter={handleFilter}
           onExport={handleExport}
           onSync={handleSync}
-          isAdmin={user?.isAdmin || false}
+          isAdmin={user?.is_admin || false}
           isSyncing={isSyncing}
           statusOptions={statusOptions}
         />

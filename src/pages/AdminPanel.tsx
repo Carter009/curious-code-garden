@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +11,7 @@ import { apiHandler } from '@/server/api';
 import { CredentialsService, ApiCredentials } from '@/services/CredentialsService';
 
 const AdminPanel = () => {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   
   // API settings with secure storage approach
   const [apiKey, setApiKey] = useState('');
@@ -166,7 +165,7 @@ const AdminPanel = () => {
   
   const statusDisplay = getApiStatusDisplay();
 
-  if (!user?.isAdmin) {
+  if (!user?.is_admin) {
     return (
       <div className="container mx-auto py-8 px-4 text-center">
         <h2 className="text-2xl font-bold">Access Denied</h2>

@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ApiService } from '@/services/ApiService';
 import { Order } from '@/types/models';
-import { useAuth } from '@/context/AuthContext';
+import { useSupabaseAuth } from '@/context/SupabaseAuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +19,7 @@ const OrderDetail = () => {
   const [notes, setNotes] = useState('');
   const [reconciled, setReconciled] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -230,7 +229,7 @@ const OrderDetail = () => {
                 {order.reconciled && (
                   <div className="mt-4 p-3 bg-gray-50 rounded text-sm">
                     <p>
-                      Reconciled by: {user?.name || "Unknown"} 
+                      Reconciled by: {user?.user_metadata?.name || "Unknown"} 
                       {order.reconciled_at && (
                         <span className="block mt-1 text-gray-500">
                           {new Date(order.reconciled_at).toLocaleString()}
