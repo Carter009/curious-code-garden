@@ -33,10 +33,44 @@ const Dashboard = () => {
       page: currentPage,
       per_page: 10
     }),
-    // Use placeholderData instead of keepPreviousData in v5
     placeholderData: (previousData) => previousData,
-    onSuccess: (data) => {
-      // Extract unique statuses for filter dropdown
+    meta: {
+      onSuccess: (data: any) => {
+        // Extract unique statuses for filter dropdown
+        const uniqueStatuses = new Set<string>();
+        data.orders.forEach((order: Order) => {
+          if (order.status) uniqueStatuses.add(order.status);
+        });
+        setStatusOptions(Array.from(uniqueStatuses));
+        
+        // Display a message if no orders are found
+        if (data.orders.length === 0) {
+          toast({
+            title: "No orders found",
+            description: "Try adjusting your filters or sync with Bybit API",
+            variant: "default",
+          });
+        }
+      },
+      onError: (error: any) => {
+        toast({
+          title: "Error",
+          description: "Failed to fetch orders",
+          variant: "destructive",
+        });
+        console.error("Error fetching orders:", error);
+      }
+    }
+  });
+
+  // Get current values from the query result
+  const orders = data?.orders || [];
+  const totalOrders = data?.total || 0;
+  const totalPages = data?.pages || 1;
+
+  // Call onSuccess manually when data changes
+  useEffect(() => {
+    if (data) {
       const uniqueStatuses = new Set<string>();
       data.orders.forEach(order => {
         if (order.status) uniqueStatuses.add(order.status);
@@ -51,21 +85,8 @@ const Dashboard = () => {
           variant: "default",
         });
       }
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch orders",
-        variant: "destructive",
-      });
-      console.error("Error fetching orders:", error);
     }
-  });
-
-  // Get current values from the query result
-  const orders = data?.orders || [];
-  const totalOrders = data?.total || 0;
-  const totalPages = data?.pages || 1;
+  }, [data]);
 
   const handleFilter = (newFilters: FilterParams) => {
     setFilters(newFilters);
