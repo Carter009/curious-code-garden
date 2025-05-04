@@ -1,6 +1,6 @@
 
 import axios, { AxiosError } from 'axios';
-import crypto from 'crypto';
+import CryptoJS from 'crypto-js';
 
 // Bybit API endpoints
 const BASE_URL = 'https://api.bybit.com';
@@ -29,7 +29,7 @@ const convertTimestamp = (timestamp: number): string => {
   return date.toISOString();
 };
 
-// Generate signature for Bybit API authentication
+// Generate signature for Bybit API authentication using crypto-js instead of Node's crypto
 const generateSignature = (apiKey: string, apiSecret: string, timestamp: number, params: any = {}): string => {
   // Concatenate parameters for signature
   const queryString = Object.keys(params)
@@ -40,11 +40,8 @@ const generateSignature = (apiKey: string, apiSecret: string, timestamp: number,
   // Create signature string: timestamp + apiKey + recv_window + queryString
   const signatureString = timestamp + apiKey + '5000' + queryString;
   
-  // Generate HMAC signature using API secret
-  return crypto
-    .createHmac('sha256', apiSecret)
-    .update(signatureString)
-    .digest('hex');
+  // Generate HMAC signature using API secret with CryptoJS
+  return CryptoJS.HmacSHA256(signatureString, apiSecret).toString(CryptoJS.enc.Hex);
 };
 
 // Retry logic function
