@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { OrdersTable } from '@/components/OrdersTable';
 import { FilterBar } from '@/components/FilterBar';
@@ -17,6 +18,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Button } from '@/components/ui/button';
+import { AlertCircle, Check } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const Dashboard = () => {
   const { user, isAdmin } = useSupabaseAuth();
@@ -24,15 +27,67 @@ const Dashboard = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [statusOptions, setStatusOptions] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [apiStatus, setApiStatus] = useState<{
+    isConnected: boolean | null;
+    message: string;
+  }>({
+    isConnected: null,
+    message: "Checking API connection...",
+  });
+  
+  // Check API connection status
+  useEffect(() => {
+    const checkApiConnection = async () => {
+      try {
+        const credentials = await ApiService.getCredentialsFromSupabase();
+        console.log("API connection check:", credentials);
+        
+        if (credentials.useApi && credentials.apiKey && credentials.apiSecret) {
+          setApiStatus({
+            isConnected: true,
+            message: "Connected to Bybit API"
+          });
+        } else if (credentials.useApi && (!credentials.apiKey || !credentials.apiSecret)) {
+          setApiStatus({
+            isConnected: false,
+            message: "API enabled but credentials missing or incomplete"
+          });
+        } else {
+          setApiStatus({
+            isConnected: false,
+            message: "Using demo data (API disabled)"
+          });
+        }
+      } catch (error) {
+        console.error("Error checking API connection:", error);
+        setApiStatus({
+          isConnected: false,
+          message: "Error checking API connection"
+        });
+      }
+    };
+    
+    checkApiConnection();
+  }, []);
   
   // Use React Query to fetch orders - updated to use the latest React Query v5 syntax
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['orders', filters, currentPage],
-    queryFn: () => ApiService.getOrders({
-      ...filters,
-      page: currentPage,
-      per_page: 10
-    }),
+    queryFn: async () => {
+      console.log("Fetching orders with filters:", filters);
+      try {
+        const result = await ApiService.getOrders({
+          ...filters,
+          page: currentPage,
+          per_page: 10
+        });
+        console.log("Orders fetched successfully:", result);
+        return result;
+      } catch (error) {
+        console.error("Error in queryFn:", error);
+        throw error;
+      }
+    },
     placeholderData: (previousData) => previousData,
     meta: {
       onSuccess: (data: any) => {
@@ -196,6 +251,25 @@ const Dashboard = () => {
             <Button variant="outline" onClick={resetFilters}>Reset Filters</Button>
           </div>
         </div>
+
+        {/* API Connection Status Alert */}
+        {apiStatus.isConnected !== null && (
+          <Alert variant={apiStatus.isConnected ? "default" : "warning"}>
+            <div className="flex items-center">
+              {apiStatus.isConnected ? (
+                <Check className="h-4 w-4 mr-2" />
+              ) : (
+                <AlertCircle className="h-4 w-4 mr-2" />
+              )}
+              <div>
+                <AlertTitle>API Status</AlertTitle>
+                <AlertDescription>
+                  {apiStatus.message}
+                </AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        )}
 
         <FilterBar
           onFilter={handleFilter}

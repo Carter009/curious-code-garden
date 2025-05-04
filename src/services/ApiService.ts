@@ -14,6 +14,8 @@ export class ApiService {
         return CredentialsService.getCredentials();
       }
       
+      console.log("User authenticated, fetching credentials from Supabase");
+      
       // Try to fetch credentials from Supabase
       const { data, error } = await supabase
         .from('api_credentials')
@@ -23,6 +25,7 @@ export class ApiService {
       
       if (error) {
         console.log("Error fetching credentials from Supabase:", error);
+        console.log("Falling back to local credentials");
         return CredentialsService.getCredentials();
       }
       
@@ -39,6 +42,10 @@ export class ApiService {
       });
       
       console.log("Using credentials from Supabase");
+      console.log("API enabled:", data.use_api);
+      console.log("API key available:", !!data.api_key);
+      console.log("API secret available:", !!data.api_secret);
+      
       // Fix the type issue by explicitly casting to the correct type
       const apiStatus = data.api_key && data.api_secret ? 'configured' : 'partial';
       return {
@@ -49,21 +56,27 @@ export class ApiService {
       };
     } catch (error) {
       console.error('Error accessing Supabase credentials:', error);
+      console.log("Falling back to local credentials due to error");
       return CredentialsService.getCredentials();
     }
   }
 
   static async getOrders(filters: FilterParams): Promise<OrdersResponse> {
-    // Get API credentials from Supabase
-    const credentials = await this.getCredentialsFromSupabase();
-    console.log(`Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}, API Key available: ${credentials.apiKey ? 'Yes' : 'No'}`);
-    
-    // Initialize the backend server with current credentials
-    backendServer.initializeBybitHandler(credentials);
+    console.log("ApiService.getOrders called with filters:", filters);
     
     try {
+      // Get API credentials from Supabase
+      const credentials = await this.getCredentialsFromSupabase();
+      console.log(`Using Bybit API: ${credentials.useApi ? 'Yes' : 'No'}, API Key available: ${credentials.apiKey ? 'Yes' : 'No'}`);
+      
+      // Initialize the backend server with current credentials
+      backendServer.initializeBybitHandler(credentials);
+      
       // Use the backend server to get orders
-      return await backendServer.getOrders(filters);
+      console.log("Calling backendServer.getOrders");
+      const results = await backendServer.getOrders(filters);
+      console.log(`Retrieved ${results.orders?.length || 0} orders`);
+      return results;
     } catch (error) {
       console.error('Error fetching orders:', error);
       throw error;
