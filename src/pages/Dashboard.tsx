@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { OrdersTable } from '@/components/OrdersTable';
 import { FilterBar } from '@/components/FilterBar';
@@ -39,20 +38,24 @@ const Dashboard = () => {
   useEffect(() => {
     const checkApiConnection = async () => {
       try {
+        console.log("Checking API credentials from Supabase...");
         const credentials = await ApiService.getCredentialsFromSupabase();
-        console.log("API connection check:", credentials);
+        console.log("API connection check results:", credentials);
         
         if (credentials.useApi && credentials.apiKey && credentials.apiSecret) {
+          console.log("API is fully configured");
           setApiStatus({
             isConnected: true,
             message: "Connected to Bybit API"
           });
         } else if (credentials.useApi && (!credentials.apiKey || !credentials.apiSecret)) {
+          console.log("API is enabled but credentials are missing");
           setApiStatus({
             isConnected: false,
             message: "API enabled but credentials missing or incomplete"
           });
         } else {
+          console.log("API is disabled, using demo data");
           setApiStatus({
             isConnected: false,
             message: "Using demo data (API disabled)"
@@ -76,6 +79,7 @@ const Dashboard = () => {
     queryFn: async () => {
       console.log("Fetching orders with filters:", filters);
       try {
+        console.log("Calling ApiService.getOrders with filters:", filters);
         const result = await ApiService.getOrders({
           ...filters,
           page: currentPage,
@@ -254,7 +258,7 @@ const Dashboard = () => {
 
         {/* API Connection Status Alert */}
         {apiStatus.isConnected !== null && (
-          <Alert variant={apiStatus.isConnected ? "default" : "warning"}>
+          <Alert variant={apiStatus.isConnected ? "default" : "destructive"}>
             <div className="flex items-center">
               {apiStatus.isConnected ? (
                 <Check className="h-4 w-4 mr-2" />
